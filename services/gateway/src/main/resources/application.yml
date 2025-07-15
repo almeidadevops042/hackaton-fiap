@@ -1,0 +1,38 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway-service
+  
+  cloud:
+    gateway:
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+
+services:
+  upload-url: ${UPLOAD_SERVICE_URL:http://upload-service:8081}
+  processing-url: ${PROCESSING_SERVICE_URL:http://processing-service:8082}
+  storage-url: ${STORAGE_SERVICE_URL:http://storage-service:8083}
+  notification-url: ${NOTIFICATION_SERVICE_URL:http://notification-service:8084}
+  auth-url: ${AUTH_SERVICE_URL:http://auth-service:8085}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.fiapx: DEBUG
+    org.springframework.cloud.gateway: TRACE 

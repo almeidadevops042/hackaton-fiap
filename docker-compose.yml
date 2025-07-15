@@ -1,0 +1,151 @@
+# Para escalar múltiplas instâncias de um serviço, utilize o comando:
+#   docker-compose up --scale upload-service=3 --scale processing-service=3 --scale storage-service=2 --scale notification-service=2 --scale auth-service=2 --scale gateway=2
+# Isso permite que cada serviço rode em múltiplas réplicas para maior escalabilidade.
+# Em produção, recomenda-se usar Docker Swarm ou Kubernetes para orquestração avançada e balanceamento de carga.
+
+version: '3.8'
+
+services:
+  # API Gateway (Kotlin/Spring Cloud Gateway)
+  gateway:
+    build: ./services/gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SERVICES_UPLOAD_URL=http://upload-service:8081
+      - SERVICES_PROCESSING_URL=http://processing-service:8082
+      - SERVICES_STORAGE_URL=http://storage-service:8083
+      - SERVICES_NOTIFICATION_URL=http://notification-service:8084
+      - SERVICES_AUTH_URL=http://auth-service:8085
+    depends_on:
+      - upload-service
+      - processing-service
+      - storage-service
+      - notification-service
+      - auth-service
+    networks:
+      - microservices-network
+
+  # Upload Service (Kotlin/Spring Boot)
+  upload-service:
+    build: ./services/upload
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - STORAGE_SERVICE_URL=http://storage-service:8083
+    volumes:
+      - ./data/uploads:/app/uploads
+    depends_on:
+      - redis
+    networks:
+      - microservices-network
+
+  # Processing Service (Kotlin/Spring Boot)
+  processing-service:
+    build: ./services/processing
+    ports:
+      - "8082:8082"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - STORAGE_SERVICE_URL=http://storage-service:8083
+      - NOTIFICATION_SERVICE_URL=http://notification-service:8084
+    volumes:
+      - ./data/processing:/app/processing
+      - ./data/outputs:/app/outputs
+      - ./data/uploads:/app/uploads
+    depends_on:
+      - redis
+    networks:
+      - microservices-network
+
+  # Storage Service (Kotlin/Spring Boot)
+  storage-service:
+    build: ./services/storage
+    ports:
+      - "8083:8083"
+    environment:
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./data/uploads:/app/uploads
+      - ./data/outputs:/app/outputs
+    depends_on:
+      - redis
+    networks:
+      - microservices-network
+
+  # Notification Service (Kotlin/Spring Boot)
+  notification-service:
+    build: ./services/notification
+    ports:
+      - "8084:8084"
+    environment:
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+    networks:
+      - microservices-network
+
+  # Auth Service (Kotlin/Spring Boot)
+  auth-service:
+    build: ./services/auth
+    ports:
+      - "8085:8085"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=fiapx_db
+      - POSTGRES_USER=fiapx_user
+      - POSTGRES_PASSWORD=fiapx_password
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - microservices-network
+
+  # Redis para mensageria e cache
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - microservices-network
+
+  # PostgreSQL para persistência de dados
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=fiapx_db
+      - POSTGRES_USER=fiapx_user
+      - POSTGRES_PASSWORD=fiapx_password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - microservices-network
+
+  # Nginx Load Balancer (opcional)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - gateway
+    networks:
+      - microservices-network
+
+volumes:
+  redis-data:
+  postgres-data:
+
+networks:
+  microservices-network:
+    driver: bridge 

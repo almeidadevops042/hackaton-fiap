@@ -1,0 +1,42 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: auth-service
+  redis:
+    host: ${REDIS_URL:localhost}
+    port: 6379
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:fiapx_db}
+    username: ${POSTGRES_USER:fiapx_user}
+    password: ${POSTGRES_PASSWORD:fiapx_password}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+app:
+  auth:
+    jwt:
+      secret: ${JWT_SECRET:your-super-secret-jwt-key-that-is-at-least-256-bits-long-for-security}
+      expiration: 86400  # 24 hours in seconds
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.fiapx.auth: DEBUG
+    org.springframework.security: DEBUG 

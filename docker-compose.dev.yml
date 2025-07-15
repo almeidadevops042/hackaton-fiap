@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  gateway:
+    environment:
+      - GIN_MODE=debug
+    volumes:
+      - ./services/gateway:/app
+    ports:
+      - "8080:8080"
+
+  upload-service:
+    environment:
+      - GIN_MODE=debug
+    volumes:
+      - ./services/upload:/app
+      - ./data/uploads:/app/uploads
+    ports:
+      - "8081:8081"
+
+  processing-service:
+    environment:
+      - GIN_MODE=debug
+    volumes:
+      - ./services/processing:/app
+      - ./data/processing:/app/processing
+      - ./data/outputs:/app/outputs
+      - ./data/uploads:/app/uploads  # Access to uploaded files
+    ports:
+      - "8082:8082"
+
+  storage-service:
+    environment:
+      - GIN_MODE=debug
+    volumes:
+      - ./services/storage:/app
+      - ./data/uploads:/app/uploads
+      - ./data/outputs:/app/outputs
+    ports:
+      - "8083:8083"
+
+  notification-service:
+    environment:
+      - GIN_MODE=debug
+    volumes:
+      - ./services/notification:/app
+    ports:
+      - "8084:8084"
+
+  redis:
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-dev-data:/data
+
+volumes:
+  redis-dev-data: 

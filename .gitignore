@@ -1,0 +1,61 @@
+# Build
+/build/
+.gradle/
+**/build/
+**/.gradle/
+!/gradle/wrapper/gradle-wrapper.jar
+
+# IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.sw?
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+__MACOSX/
+
+# Arquivos temporários
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# Arquivos de cache
+*.class
+*.jar
+*.war
+*.db
+*.sqlite
+*.h2.db
+
+# Arquivos de configuração
+*.env
+.env.*
+
+# Saídas e uploads
+outputs/
+uploads/
+data/outputs/
+data/uploads/
+services/*/uploads/
+services/*/test-uploads/
+services/*/test-outputs/
+
+# Outros
+node_modules/
+coverage/
+*.coverage
+*.lcov
+
+# Backup
+*~
+
+# Docker
+*.pid
+docker-compose.override.yml 
