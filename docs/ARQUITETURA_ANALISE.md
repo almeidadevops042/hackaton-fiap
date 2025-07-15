@@ -45,13 +45,15 @@
 - **Health Checks**: Monitoramento centralizado
 
 **Estrutura:**
-```go
-type Config struct {
-    UploadServiceURL      string
-    ProcessingServiceURL  string
-    StorageServiceURL     string
-    NotificationServiceURL string
-}
+```kotlin
+@ConfigurationProperties(prefix = "services")
+data class ServicesConfig(
+    val upload: String,
+    val processing: String,
+    val storage: String,
+    val notification: String,
+    val auth: String
+)
 ```
 
 ### **2. Upload Service**
@@ -62,16 +64,18 @@ type Config struct {
 - **APIs**: CRUD completo de uploads
 
 **Estrutura:**
-```go
-type FileMetadata struct {
-    ID        string    `json:"id"`
-    Filename  string    `json:"filename"`
-    Size      int64     `json:"size"`
-    Hash      string    `json:"hash"`
-    MimeType  string    `json:"mime_type"`
-    UploadedAt time.Time `json:"uploaded_at"`
-    Status    string    `json:"status"`
-}
+```kotlin
+data class FileMetadata(
+    val id: String,
+    val filename: String,
+    val size: Long,
+    val hash: String,
+    val mimeType: String,
+    val uploadedAt: LocalDateTime,
+    val status: String,
+    val userId: String,
+    val username: String
+)
 ```
 
 ### **3. Processing Service**
@@ -83,19 +87,19 @@ type FileMetadata struct {
 - **ZIP**: Compactação dos frames
 
 **Estrutura:**
-```go
-type ProcessingJob struct {
-    ID            string     `json:"id"`
-    FileID        string     `json:"file_id"`
-    Status        string     `json:"status"`
-    Progress      int        `json:"progress"`
-    CreatedAt     time.Time  `json:"created_at"`
-    StartedAt     *time.Time `json:"started_at,omitempty"`
-    CompletedAt   *time.Time `json:"completed_at,omitempty"`
-    OutputFile    string     `json:"output_file,omitempty"`
-    FrameCount    int        `json:"frame_count,omitempty"`
-    Error         string     `json:"error,omitempty"`
-}
+```kotlin
+data class ProcessingJob(
+    val id: String,
+    val fileId: String,
+    val status: String,
+    val progress: Int,
+    val createdAt: LocalDateTime,
+    val startedAt: LocalDateTime? = null,
+    val completedAt: LocalDateTime? = null,
+    val outputFile: String? = null,
+    val frameCount: Int? = null,
+    val error: String? = null
+)
 ```
 
 ### **4. Storage Service**
@@ -107,15 +111,15 @@ type ProcessingJob struct {
 - **APIs**: CRUD completo de arquivos
 
 **Estrutura:**
-```go
-type FileInfo struct {
-    Filename    string    `json:"filename"`
-    Size        int64     `json:"size"`
-    ModTime     time.Time `json:"mod_time"`
-    Path        string    `json:"path"`
-    Type        string    `json:"type"`
-    DownloadURL string    `json:"download_url"`
-}
+```kotlin
+data class FileInfo(
+    val filename: String,
+    val size: Long,
+    val modTime: LocalDateTime,
+    val path: String,
+    val type: String,
+    val downloadUrl: String
+)
 ```
 
 ### **5. Notification Service**
@@ -127,17 +131,17 @@ type FileInfo struct {
 - **Limpeza**: Job automático de cleanup
 
 **Estrutura:**
-```go
-type Notification struct {
-    ID        string     `json:"id"`
-    Type      string     `json:"type"`
-    Title     string     `json:"title"`
-    Message   string     `json:"message"`
-    Data      interface{} `json:"data,omitempty"`
-    Read      bool       `json:"read"`
-    CreatedAt time.Time  `json:"created_at"`
-    ExpiresAt *time.Time `json:"expires_at,omitempty"`
-}
+```kotlin
+data class Notification(
+    val id: String,
+    val type: String,
+    val title: String,
+    val message: String,
+    val data: Any? = null,
+    val read: Boolean = false,
+    val createdAt: LocalDateTime,
+    val expiresAt: LocalDateTime? = null
+)
 ```
 
 ## **Infraestrutura**
@@ -223,7 +227,7 @@ type Notification struct {
 A implementação atual **supera significativamente** o que estava representado no diagrama original:
 
 1. **Arquitetura Moderna**: Microserviços bem definidos
-2. **Tecnologias Atuais**: Go, Docker, Redis, Nginx
+2. **Tecnologias Atuais**: Kotlin, Spring Boot, Docker, Redis, Nginx
 3. **Padrões Corretos**: API Gateway, Async Processing
 4. **Operacional**: Health checks, logs, métricas
 5. **Desenvolvimento**: Ambiente completo com Docker

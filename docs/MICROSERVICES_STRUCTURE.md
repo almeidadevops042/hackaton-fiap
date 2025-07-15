@@ -25,10 +25,11 @@ Cliente Web → Nginx → API Gateway → Microserviços → Redis → Processam
 ### **Estrutura de Diretórios**
 ```
 services/gateway/
-├── main.go           # Código principal
-├── go.mod           # Dependências Go
-├── go.sum           # Checksums
-└── Dockerfile       # Containerização
+├── build.gradle.kts      # Configuração Gradle
+├── src/main/kotlin/      # Código fonte Kotlin
+├── src/main/resources/   # Recursos e configurações
+├── src/test/kotlin/      # Testes unitários
+└── Dockerfile            # Containerização
 ```
 
 ### **Responsabilidades**
@@ -52,13 +53,15 @@ GET  /api/v1/download/:filename # Proxy → Storage Service
 ```
 
 ### **Configuração**
-```go
-type Config struct {
-    UploadServiceURL      string
-    ProcessingServiceURL  string
-    StorageServiceURL     string
-    NotificationServiceURL string
-}
+```kotlin
+@ConfigurationProperties(prefix = "services")
+data class ServicesConfig(
+    val upload: String,
+    val processing: String,
+    val storage: String,
+    val notification: String,
+    val auth: String
+)
 ```
 
 ---
@@ -68,11 +71,12 @@ type Config struct {
 ### **Estrutura de Diretórios**
 ```
 services/upload/
-├── main.go           # Código principal
-├── go.mod           # Dependências Go
-├── go.sum           # Checksums
-├── Dockerfile       # Containerização
-└── uploads/         # Diretório de uploads (volume)
+├── build.gradle.kts      # Configuração Gradle
+├── src/main/kotlin/      # Código fonte Kotlin
+├── src/main/resources/   # Recursos e configurações
+├── src/test/kotlin/      # Testes unitários
+├── Dockerfile            # Containerização
+└── uploads/              # Diretório de uploads (volume)
 ```
 
 ### **Responsabilidades**
@@ -84,16 +88,18 @@ services/upload/
 - Geração de IDs únicos
 
 ### **Estruturas de Dados**
-```go
-type FileMetadata struct {
-    ID        string    `json:"id"`
-    Filename  string    `json:"filename"`
-    Size      int64     `json:"size"`
-    Hash      string    `json:"hash"`
-    MimeType  string    `json:"mime_type"`
-    UploadedAt time.Time `json:"uploaded_at"`
-    Status    string    `json:"status"`
-}
+```kotlin
+data class FileMetadata(
+    val id: String,
+    val filename: String,
+    val size: Long,
+    val hash: String,
+    val mimeType: String,
+    val uploadedAt: LocalDateTime,
+    val status: String,
+    val userId: String,
+    val username: String
+)
 ```
 
 ### **Validações Implementadas**
@@ -103,11 +109,11 @@ type FileMetadata struct {
 - **Segurança**: Validação de Content-Type
 
 ### **Endpoints**
-```go
+```kotlin
 POST   /upload             # Upload de arquivo
-GET    /upload/:id/status  # Status do upload
+GET    /upload/{id}/status # Status do upload
 GET    /uploads            # Listar uploads
-DELETE /upload/:id         # Deletar upload
+DELETE /upload/{id}        # Deletar upload
 ```
 
 ---
@@ -117,12 +123,13 @@ DELETE /upload/:id         # Deletar upload
 ### **Estrutura de Diretórios**
 ```
 services/processing/
-├── main.go           # Código principal
-├── go.mod           # Dependências Go
-├── go.sum           # Checksums
-├── Dockerfile       # Containerização (com FFmpeg)
-├── processing/      # Arquivos temporários
-└── outputs/         # Resultados finais (volume)
+├── build.gradle.kts      # Configuração Gradle
+├── src/main/kotlin/      # Código fonte Kotlin
+├── src/main/resources/   # Recursos e configurações
+├── src/test/kotlin/      # Testes unitários
+├── Dockerfile            # Containerização (com FFmpeg)
+├── processing/           # Arquivos temporários
+└── outputs/              # Resultados finais (volume)
 ```
 
 ### **Responsabilidades**
@@ -134,19 +141,19 @@ services/processing/
 - Notificação de conclusão
 
 ### **Estruturas de Dados**
-```go
-type ProcessingJob struct {
-    ID            string     `json:"id"`
-    FileID        string     `json:"file_id"`
-    Status        string     `json:"status"` // pending, processing, completed, failed
-    Progress      int        `json:"progress"`
-    CreatedAt     time.Time  `json:"created_at"`
-    StartedAt     *time.Time `json:"started_at,omitempty"`
-    CompletedAt   *time.Time `json:"completed_at,omitempty"`
-    OutputFile    string     `json:"output_file,omitempty"`
-    FrameCount    int        `json:"frame_count,omitempty"`
-    Error         string     `json:"error,omitempty"`
-}
+```kotlin
+data class ProcessingJob(
+    val id: String,
+    val fileId: String,
+    val status: String, // pending, processing, completed, failed
+    val progress: Int,
+    val createdAt: LocalDateTime,
+    val startedAt: LocalDateTime? = null,
+    val completedAt: LocalDateTime? = null,
+    val outputFile: String? = null,
+    val frameCount: Int? = null,
+    val error: String? = null
+)
 ```
 
 ### **Pipeline de Processamento**
@@ -163,11 +170,11 @@ ffmpeg -i input.mp4 -vf fps=1 -y frame_%04d.png
 ```
 
 ### **Endpoints**
-```go
+```kotlin
 POST   /process           # Iniciar processamento
-GET    /process/:id/status # Status do job
+GET    /process/{id}/status # Status do job
 GET    /jobs              # Listar todos os jobs
-DELETE /process/:id       # Cancelar job
+DELETE /process/{id}      # Cancelar job
 ```
 
 ---
@@ -177,12 +184,13 @@ DELETE /process/:id       # Cancelar job
 ### **Estrutura de Diretórios**
 ```
 services/storage/
-├── main.go           # Código principal
-├── go.mod           # Dependências Go
-├── go.sum           # Checksums
-├── Dockerfile       # Containerização
-├── uploads/         # Arquivos de entrada (volume)
-└── outputs/         # Arquivos processados (volume)
+├── build.gradle.kts      # Configuração Gradle
+├── src/main/kotlin/      # Código fonte Kotlin
+├── src/main/resources/   # Recursos e configurações
+├── src/test/kotlin/      # Testes unitários
+├── Dockerfile            # Containerização
+├── uploads/              # Arquivos de entrada (volume)
+└── outputs/              # Arquivos processados (volume)
 ```
 
 ### **Responsabilidades**
@@ -194,15 +202,15 @@ services/storage/
 - Métricas de armazenamento
 
 ### **Estruturas de Dados**
-```go
-type FileInfo struct {
-    Filename    string    `json:"filename"`
-    Size        int64     `json:"size"`
-    ModTime     time.Time `json:"mod_time"`
-    Path        string    `json:"path"`
-    Type        string    `json:"type"` // upload, output
-    DownloadURL string    `json:"download_url"`
-}
+```kotlin
+data class FileInfo(
+    val filename: String,
+    val size: Long,
+    val modTime: LocalDateTime,
+    val path: String,
+    val type: String, // upload, output
+    val downloadUrl: String
+)
 ```
 
 ### **Tipos de Arquivos**
@@ -210,12 +218,12 @@ type FileInfo struct {
 - **Output**: ZIPs com frames processados
 
 ### **Endpoints**
-```go
+```kotlin
 GET    /files                # Listar todos os arquivos
-GET    /files/:type          # Listar por tipo (upload/output)
-GET    /download/:filename   # Download seguro
-DELETE /files/:filename      # Deletar arquivo
-GET    /files/:filename/info # Informações detalhadas
+GET    /files/{type}         # Listar por tipo (upload/output)
+GET    /download/{filename}  # Download seguro
+DELETE /files/{filename}     # Deletar arquivo
+GET    /files/{filename}/info # Informações detalhadas
 GET    /storage/stats        # Estatísticas de uso
 POST   /storage/cleanup      # Limpeza manual
 ```
@@ -227,10 +235,11 @@ POST   /storage/cleanup      # Limpeza manual
 ### **Estrutura de Diretórios**
 ```
 services/notification/
-├── main.go           # Código principal
-├── go.mod           # Dependências Go
-├── go.sum           # Checksums
-└── Dockerfile       # Containerização
+├── build.gradle.kts      # Configuração Gradle
+├── src/main/kotlin/      # Código fonte Kotlin
+├── src/main/resources/   # Recursos e configurações
+├── src/test/kotlin/      # Testes unitários
+└── Dockerfile            # Containerização
 ```
 
 ### **Responsabilidades**
@@ -242,17 +251,17 @@ services/notification/
 - API completa para gerenciamento
 
 ### **Estruturas de Dados**
-```go
-type Notification struct {
-    ID        string     `json:"id"`
-    Type      string     `json:"type"`      // info, success, warning, error
-    Title     string     `json:"title"`
-    Message   string     `json:"message"`
-    Data      interface{} `json:"data,omitempty"`
-    Read      bool       `json:"read"`
-    CreatedAt time.Time  `json:"created_at"`
-    ExpiresAt *time.Time `json:"expires_at,omitempty"`
-}
+```kotlin
+data class Notification(
+    val id: String,
+    val type: String, // info, success, warning, error
+    val title: String,
+    val message: String,
+    val data: Any? = null,
+    val read: Boolean = false,
+    val createdAt: LocalDateTime,
+    val expiresAt: LocalDateTime? = null
+)
 ```
 
 ### **Tipos de Notificações**
@@ -262,11 +271,11 @@ type Notification struct {
 - **error**: Erros críticos
 
 ### **Endpoints**
-```go
+```kotlin
 GET    /notifications                # Listar notificações
 POST   /notifications               # Criar notificação
-GET    /notifications/:id           # Notificação específica
-DELETE /notifications/:id           # Deletar notificação
+GET    /notifications/{id}          # Notificação específica
+DELETE /notifications/{id}          # Deletar notificação
 POST   /notifications/mark-read     # Marcar como lida
 POST   /notifications/mark-all-read # Marcar todas como lidas
 DELETE /notifications              # Deletar todas
@@ -303,20 +312,20 @@ downloads:total         # Total de downloads
 Todos os serviços utilizam builds otimizados:
 ```dockerfile
 # Stage 1: Build
-FROM golang:1.21-alpine AS builder
+FROM gradle:8.5-jdk17 AS builder
 WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
-COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -o main .
+COPY build.gradle.kts settings.gradle.kts ./
+COPY gradle/ gradle/
+COPY src/ src/
+RUN gradle build -x test
 
 # Stage 2: Runtime
-FROM alpine:latest
+FROM eclipse-temurin:17-jre-alpine
 RUN apk --no-cache add ca-certificates
-WORKDIR /root/
-COPY --from=builder /app/main .
+WORKDIR /app
+COPY --from=builder /app/build/libs/*.jar app.jar
 EXPOSE 8080
-CMD ["./main"]
+CMD ["java", "-jar", "app.jar"]
 ```
 
 ### **Health Checks**

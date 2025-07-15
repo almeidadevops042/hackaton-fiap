@@ -149,7 +149,6 @@ projeto-fiapx-refactoring/
 │   ├── storage/             # Serviço de Armazenamento
 │   ├── notification/        # Serviço de Notificações
 │   └── auth/                # Serviço de Autenticação
-├── services-go-backup/      # Backup dos serviços Go
 ├── docker-compose.yml       # Configuração Docker
 ├── Makefile                 # Comandos de automação
 └── README.md                # Este arquivo
